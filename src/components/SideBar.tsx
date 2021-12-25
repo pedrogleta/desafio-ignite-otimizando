@@ -1,28 +1,27 @@
-import { Button } from "./Button";
+import { IGenre } from '../App';
+import { Button } from './Button';
 
 interface SideBarProps {
-  genres: Array<{
-    id: number;
-    name: 'action' | 'comedy' | 'documentary' | 'drama' | 'horror' | 'family';
-    title: string;
-  }>;
-  selectedGenreId: number;
-  buttonClickCallback: (args: any) => void;
+  genres: IGenre[];
+  selectedGenreId: string;
+  buttonClickCallback: (id: string) => void;
 }
 
 export function SideBar({
   genres,
   selectedGenreId,
-  buttonClickCallback
+  buttonClickCallback,
 }: SideBarProps) {
   return (
     <nav className="sidebar">
-      <span>Watch<p>Me</p></span>
+      <span>
+        Watch<p>Me</p>
+      </span>
 
       <div className="buttons-container">
-        {genres.map(genre => (
+        {genres.map((genre) => (
           <Button
-            key={String(genre.id)}
+            key={genre.id}
             title={genre.title}
             iconName={genre.name}
             onClick={() => buttonClickCallback(genre.id)}
@@ -30,7 +29,6 @@ export function SideBar({
           />
         ))}
       </div>
-
     </nav>
-  )
+  );
 }

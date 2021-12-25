@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { SideBar } from './components/SideBar';
 import { Content } from './components/Content';
@@ -10,10 +10,14 @@ import './styles/global.scss';
 import './styles/sidebar.scss';
 import './styles/content.scss';
 
-interface GenreResponseProps {
+export interface IApiGenre {
   id: number;
   name: 'action' | 'comedy' | 'documentary' | 'drama' | 'horror' | 'family';
   title: string;
+}
+
+export interface IGenre extends Omit<IApiGenre, 'id'> {
+  id: string;
 }
 
 interface MovieProps {
@@ -27,33 +31,43 @@ interface MovieProps {
   Runtime: string;
 }
 
-export function App() {
-  const [selectedGenreId, setSelectedGenreId] = useState(1);
+function apiGenreToGenre(apiGenre: IApiGenre): IGenre {
+  return {
+    id: String(apiGenre.id),
+    name: apiGenre.name,
+    title: apiGenre.title,
+  };
+}
 
-  const [genres, setGenres] = useState<GenreResponseProps[]>([]);
+export function App() {
+  const [selectedGenreId, setSelectedGenreId] = useState('1');
+
+  const [genres, setGenres] = useState<IGenre[]>([]);
 
   const [movies, setMovies] = useState<MovieProps[]>([]);
-  const [selectedGenre, setSelectedGenre] = useState<GenreResponseProps>({} as GenreResponseProps);
+  const [selectedGenre, setSelectedGenre] = useState<IGenre | null>(null);
 
   useEffect(() => {
-    api.get<GenreResponseProps[]>('genres').then(response => {
-      setGenres(response.data);
+    api.get<IApiGenre[]>('genres').then((response) => {
+      setGenres(response.data.map(apiGenreToGenre));
     });
   }, []);
 
   useEffect(() => {
-    api.get<MovieProps[]>(`movies/?Genre_id=${selectedGenreId}`).then(response => {
-      setMovies(response.data);
-    });
+    api
+      .get<MovieProps[]>(`movies/?Genre_id=${selectedGenreId}`)
+      .then((response) => {
+        setMovies(response.data);
+      });
 
-    api.get<GenreResponseProps>(`genres/${selectedGenreId}`).then(response => {
-      setSelectedGenre(response.data);
-    })
+    api.get<IApiGenre>(`genres/${selectedGenreId}`).then((response) => {
+      setSelectedGenre(apiGenreToGenre(response.data));
+    });
   }, [selectedGenreId]);
 
-  function handleClickButton(id: number) {
+  const handleClickButton = useCallback((id: string) => {
     setSelectedGenreId(id);
-  }
+  }, []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -63,10 +77,9 @@ export function App() {
         buttonClickCallback={handleClickButton}
       />
 
-      <Content
-        selectedGenre={selectedGenre}
-        movies={movies}
-      />
+      {selectedGenre && (
+        <Content selectedGenre={selectedGenre} movies={movies} />
+      )}
     </div>
-  )
+  );
 }
